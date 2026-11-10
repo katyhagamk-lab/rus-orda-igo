@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Было ли «иго»?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Старая карта во весь экран: шаги-спикеры внизу, свиток с текстом слева, карточка города справа */
+:root {
+  --paper: #E9DBBF;
+  --paper-2: #F3E8D2;
+  --paper-edge: #C9B08A;
+  --ink: #2B1D15;
+  --ink-soft: #5B4636;
+  --sea: #B9B39A;
+  --river: #6F7F86;
+  --cinnabar: #A8322A;
+  --gold: #9A7434;
+  --night: #1A120E;
+  --display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --text: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body { background: var(--night); color: var(--ink); font-family: var(--text); font-size: 16px; line-height: 1.5; overflow: hidden; }
+.stage { position: fixed; inset: 0; overflow: hidden; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--paper); }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(60,35,15,.45) 100%); }
+
+/* свиток */
+.scroll {
+  position: absolute; z-index: 5;
+  left: max(20px, env(safe-area-inset-left, 0px)); top: calc(20px + env(safe-area-inset-top, 0px));
+  width: min(430px, calc(100% - 40px)); max-height: calc(100% - 150px); overflow: auto;
+  background: linear-gradient(180deg, var(--paper-2), #EADCC0);
+  border: 1px solid var(--paper-edge); border-radius: 6px;
+  box-shadow: 0 18px 40px rgba(30,15,5,.35), inset 0 0 0 6px rgba(255,250,240,.35), inset 0 0 40px rgba(150,110,60,.25);
+  padding: 26px 28px 24px;
+  transition: opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1);
+}
+.scroll.swap { opacity: 0; transform: translateY(14px); }
+.eyebrow { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--cinnabar); display: flex; gap: 14px; flex-wrap: wrap; margin: 0 0 10px; }
+.eyebrow .sp { color: var(--ink-soft); }
+h1, h2 { font-family: var(--display); font-weight: 600; margin: 0 0 10px; line-height: 1.02; text-wrap: balance; color: var(--ink); }
+h1 { font-size: clamp(44px, 6vw, 64px); }
+h2 { font-size: clamp(32px, 4vw, 44px); }
+h1 i, h2 i { color: var(--cinnabar); }
+.scroll p { margin: 0 0 12px; color: var(--ink-soft); }
+.lead { font-family: var(--display); font-style: italic; font-size: 22px; line-height: 1.25; color: var(--ink) !important; }
+.hint { font-size: 13px; color: var(--gold) !important; display: flex; gap: 8px; align-items: center; }
+.hint::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--cinnabar); box-shadow: 0 0 0 4px rgba(168,50,42,.2); animation: pulse 1.8s infinite; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+.chip { font: inherit; font-size: 14px; font-weight: 500; padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--paper-edge); background: rgba(255,250,240,.5); color: var(--ink); cursor: pointer; transition: background .2s, color .2s, border-color .2s, transform .2s; }
+.chip:hover { border-color: var(--cinnabar); transform: translateY(-1px); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+.chip:focus-visible, .step:focus-visible, .x:focus-visible, .thumb:focus-visible { outline: 2px solid var(--cinnabar); outline-offset: 3px; }
+.box { background: rgba(255,250,240,.6); border: 1px solid #D9C6A4; border-left: 3px solid var(--cinnabar); border-radius: 4px; padding: 12px 14px; margin: 0 0 12px; min-height: 3em; }
+.box b { font-family: var(--display); font-size: 22px; color: var(--ink); }
+.box p { margin: 4px 0 0; }
+blockquote { margin: 6px 0 0; font-family: var(--display); font-style: italic; font-size: 22px; line-height: 1.2; color: var(--ink); }
+blockquote cite { display: block; font-family: var(--text); font-style: normal; font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; }
+.yes { background: var(--cinnabar); color: #FBF3E4; }
+.no { background: #D9C6A4; color: #4A3A30; }
+dl.rows { margin: 0; display: grid; gap: 0; }
+dl.rows div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 8px 0; border-top: 1px dashed #CDB894; }
+dl.rows dt { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--cinnabar); padding-top: 3px; }
+dl.rows dd { margin: 0; font-size: 15px; color: var(--ink); }
+.thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.thumb { padding: 0; border: 1px solid var(--paper-edge); border-radius: 4px; overflow: hidden; cursor: zoom-in; background: none; aspect-ratio: 3 / 4; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; filter: sepia(.15); transition: transform .3s; }
+.thumb:hover img { transform: scale(1.06); }
+.scheme { display: grid; gap: 6px; margin: 4px 0 12px; }
+.scheme div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px dashed #CDB894; font-size: 14px; color: var(--ink); }
+.scheme b { font-family: var(--display); font-size: 18px; color: var(--cinnabar); }
+.ask { font-family: var(--display); font-style: italic; font-size: 21px; color: var(--ink) !important; }
+
+
+details { border-top: 1px dashed #CDB894; }
+details:last-of-type { border-bottom: 1px dashed #CDB894; margin-bottom: 10px; }
+summary { cursor: pointer; list-style: none; padding: 10px 28px 10px 0; position: relative; font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--ink); transition: color .2s; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 4px; top: 6px; font-family: var(--text); font-size: 22px; color: var(--cinnabar); transition: transform .3s; }
+summary:hover { color: var(--cinnabar); }
+summary:focus-visible { outline: 2px solid var(--cinnabar); outline-offset: 2px; }
+details[open] summary::after { transform: rotate(45deg); }
+details p { margin: 0 0 12px !important; animation: unfold .35s ease; }
+details.sch summary b { font-family: var(--display); color: var(--cinnabar); margin-right: 8px; }
+.subhead { font-family: var(--display); font-size: 20px; font-style: italic; color: var(--ink) !important; margin: 14px 0 4px !important; }
+@keyframes unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.quiz { display: grid; gap: 8px; margin: 6px 0 12px; }
+.q { font: inherit; text-align: left; cursor: pointer; background: rgba(255,250,240,.6); border: 1px solid #D9C6A4; border-radius: 6px; padding: 10px 14px; display: grid; gap: 6px; color: var(--ink); transition: border-color .2s, background .2s, transform .2s; }
+.q:hover { border-color: var(--cinnabar); transform: translateY(-1px); }
+.q:focus-visible { outline: 2px solid var(--cinnabar); outline-offset: 2px; }
+.q > span:first-child { font-family: var(--display); font-size: 19px; font-weight: 600; }
+.q .a { display: none; font-size: 14px; color: var(--ink-soft); border-top: 1px dashed #CDB894; padding-top: 6px; animation: unfold .35s ease; }
+.q[aria-expanded="true"] { background: #FBF3E4; border-color: var(--cinnabar); }
+.q[aria-expanded="true"] .a { display: block; }
+
+
+.inset { width: 100%; height: auto; display: block; margin: 4px 0 10px; background: rgba(255,250,240,.55); border: 1px solid #D9C6A4; border-radius: 6px; }
+.inset text { font-family: var(--display); font-size: 13px; font-weight: 600; fill: var(--ink); }
+.inset .iz { font-style: italic; font-size: 14px; fill: #A8322A; text-anchor: middle; opacity: .8; }
+.inset .iz2 { font-style: italic; font-size: 12px; fill: var(--ink-soft); font-weight: 500; }
+.inset .hq circle, .inset .hq path { fill: var(--ink); }
+.inset .pt { cursor: pointer; }
+.inset .pt circle { fill: #FBF3E4; stroke: var(--cinnabar); stroke-width: 2; transition: r .25s, fill .25s; }
+.inset .pt.sel circle { fill: var(--cinnabar); r: 7; }
+.inset .pt.sel text { fill: var(--cinnabar); }
+
+/* карточка города */
+.card {
+  position: absolute; z-index: 6;
+  right: max(20px, env(safe-area-inset-right, 0px)); top: calc(20px + env(safe-area-inset-top, 0px));
+  width: min(360px, calc(100% - 40px)); max-height: calc(100% - 150px); overflow: auto;
+  background: var(--paper-2); border: 1px solid var(--paper-edge); border-radius: 6px;
+  box-shadow: 0 18px 40px rgba(30,15,5,.4); padding: 0 0 16px;
+  transform: translateX(calc(100% + 40px)); opacity: 0; transition: transform .45s cubic-bezier(.2,.8,.2,1), opacity .3s;
+}
+.card.open { transform: none; opacity: 1; }
+.card img { width: 100%; max-height: 300px; object-fit: cover; display: block; cursor: zoom-in; filter: sepia(.12); }
+.card .in { padding: 14px 18px 0; }
+.card .yr { font-family: var(--display); font-size: 20px; color: var(--cinnabar); }
+.card h3 { font-family: var(--display); font-size: 32px; font-weight: 600; margin: 0 0 6px; line-height: 1.05; }
+.card p { margin: 0 0 8px; color: var(--ink-soft); font-size: 15px; }
+.card .src { font-size: 12px; color: var(--gold); }
+.x { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(26,18,14,.75); color: #FBF3E4; font-size: 18px; cursor: pointer; }
+
+/* шаги */
+.rail { position: absolute; z-index: 7; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 6px; padding: 6px; background: rgba(26,18,14,.82); border-radius: 999px; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-width: calc(100% - 32px); overflow-x: auto; }
+.step { font: inherit; font-size: 13px; color: #E9DBBF; background: transparent; border: 0; border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap; display: flex; gap: 8px; align-items: center; transition: background .25s, color .25s; }
+.step .n { font-family: var(--display); font-size: 18px; font-weight: 700; color: #C9A86A; }
+.step[aria-current="true"] { background: #E9DBBF; color: var(--ink); }
+.step[aria-current="true"] .n { color: var(--cinnabar); }
+.keys { position: absolute; z-index: 7; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: #E9DBBF; opacity: .75; display: flex; gap: 10px; align-items: center; }
+.keys button { font: inherit; color: #E9DBBF; background: rgba(26,18,14,.8); border: 1px solid #5B4636; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+
+/* лайтбокс */
+.lightbox { position: fixed; inset: 0; z-index: 20; background: rgba(15,10,8,.92); display: grid; place-items: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.lightbox.open { opacity: 1; pointer-events: auto; }
+.lightbox figure { margin: 0; display: grid; gap: 10px; justify-items: center; max-width: min(900px, 100%); }
+.lightbox img { max-height: 78vh; max-width: 100%; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,.6); transform: scale(.96); transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.lightbox.open img { transform: none; }
+.lightbox figcaption { color: #E9DBBF; font-family: var(--display); font-size: 22px; text-align: center; }
+
+/* карта: анимации */
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(168,50,42,.45); } 100% { box-shadow: 0 0 0 12px rgba(168,50,42,0); } }
+@keyframes ring { 0% { r: 9; opacity: .8; } 100% { r: 30; opacity: 0; } }
+@keyframes march { to { stroke-dashoffset: -40; } }
+.marker { cursor: pointer; }
+.marker .dot { fill: var(--cinnabar); stroke: #FBF3E4; stroke-width: 2.5; transition: r .25s; }
+.marker .halo { fill: none; stroke: var(--cinnabar); stroke-width: 2; opacity: 0; }
+.marker.hot .halo { animation: ring 1.8s ease-out infinite; }
+.marker:hover .dot, .marker:focus .dot { r: 11; }
+.marker text { font-family: var(--display); font-weight: 700; font-size: 30px; fill: var(--ink); paint-order: stroke; stroke: var(--paper-2); stroke-width: 6px; stroke-linejoin: round; }
+.marker .yr { font-size: 22px; fill: var(--cinnabar); font-weight: 600; }
+.marker.dim { opacity: .35; }
+.marker { transition: opacity .4s; }
+.route { fill: none; stroke: var(--cinnabar); stroke-width: 5; stroke-linecap: round; stroke-dasharray: var(--len); stroke-dashoffset: var(--len); transition: stroke-dashoffset 3.2s cubic-bezier(.45,.05,.3,1); }
+.route.on { stroke-dashoffset: 0; }
+.flow { fill: none; stroke: var(--gold); stroke-width: 4; stroke-dasharray: 14 10; opacity: 0; transition: opacity .5s; animation: march 1.2s linear infinite; }
+.flow.on { opacity: .95; }
+.flow.hl { stroke: var(--cinnabar); stroke-width: 6; }
+.land { fill: var(--cinnabar); opacity: 0; transition: opacity .5s; }
+.land.on { opacity: .13; }
+.land.sel { opacity: .3; }
+.edge { font-family: var(--display); font-style: italic; font-size: 30px; fill: var(--ink-soft); opacity: 0; transition: opacity .6s; }
+.edge.on { opacity: 1; }
+.river-label, .sea-label { font-family: var(--display); font-style: italic; fill: #4F6168; letter-spacing: 2px; }
+@media (prefers-reduced-motion: reduce) { .route { transition: none; } .flow, .marker.hot .halo, .hint::before { animation: none; } .scroll, .card, .lightbox { transition: none; } }
+
+@media (max-width: 760px) {
+  .scroll { top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); max-height: 46%; width: calc(100% - 32px); left: 16px; padding: 18px; }
+  .card { width: calc(100% - 32px); right: 16px; max-height: 50%; }
+  .keys { display: none; }
+  .step .t { display: none; }
+}
+</style>
+
+<div class="stage">
+  <svg id="map" role="img" aria-label="Старая карта Руси и Орды XIII века" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="8"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.24  0 0 0 0 0.12  0 0 0 0.22 0"/></filter>
+      <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 5 H10" stroke="#8E8A72" stroke-width="1.2" opacity=".55"/></pattern>
+      <radialGradient id="stain" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#C9A877" stop-opacity=".35"/><stop offset="1" stop-color="#C9A877" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect x="-400" y="-400" width="2200" height="2000" fill="#E9DBBF"/>
+    <circle cx="300" cy="300" r="380" fill="url(#stain)"/>
+    <circle cx="1150" cy="980" r="420" fill="url(#stain)"/>
+    <g id="grid" stroke="#B89F78" stroke-width="1" opacity=".5" fill="none"></g>
+    <g id="water" filter="url(#rough)"></g>
+    <g id="rivers" filter="url(#rough)"></g>
+    <g id="lands"></g>
+    <g id="flows"></g>
+    <path id="route" class="route"/>
+    <g id="labels"></g>
+    <g id="markers"></g>
+    <g id="compass" transform="translate(1210 1060)"></g>
+    <rect x="-400" y="-400" width="2200" height="2000" filter="url(#grain)" style="mix-blend-mode:multiply" pointer-events="none"/>
+  </svg>
+  <div class="vignette"></div>
+
+  <article class="scroll" id="scroll" aria-live="polite"></article>
+
+  <aside class="card" id="card" aria-live="polite">
+    <button class="x" id="cardClose" type="button" aria-label="Закрыть">×</button>
+    <img id="cardImg" alt="">
+    <div class="in"><p class="yr" id="cardYr"></p><h3 id="cardName"></h3><div id="cardText"></div><p class="src" id="cardSrc"></p></div>
+  </aside>
+
+  <nav class="rail" id="rail" aria-label="Шаги выступления"></nav>
+  <div class="keys"><span>← → листать</span><button id="fs" type="button">На весь экран</button></div>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-label="Изображение"><figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure></div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const P = ([lon, lat]) => [(lon - 17) * 36, (62 - lat) * 58];
+  const map = document.getElementById('map');
+  const el = (tag, attrs = {}, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+  function smooth(pts, closed) {
+    const p = pts.map(P);
+    if (closed) p.push(p[0], p[1]);
+    let d = 'M' + p[0].join(' ');
+    for (let i = 0; i < p.length - 1; i++) {
+      const p0 = p[i - 1] || p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C${c1.join(' ')} ${c2.join(' ')} ${p2.join(' ')}`;
+    }
+    return d + (closed ? 'Z' : '');
+  }
+
+  // градусная сетка, как на старых картах
+  const grid = document.getElementById('grid');
+  for (let lon = 20; lon <= 55; lon += 5) { const a = P([lon, 62]), b = P([lon, 41]); el('line', { x1: a[0], y1: a[1] - 400, x2: b[0], y2: b[1] + 400, 'stroke-dasharray': '2 8' }, grid); }
+  for (let lat = 45; lat <= 60; lat += 5) { const a = P([17, lat]), b = P([55, lat]); el('line', { x1: a[0] - 400, y1: a[1], x2: b[0] + 400, y2: b[1], 'stroke-dasharray': '2 8' }, grid); }
+
+  // моря и озёра (упрощённые очертания)
+  const water = document.getElementById('water');
+  const seas = {
+    black: [[28,44.6],[29.6,45.4],[30.6,46.5],[32.5,46.1],[33.6,45.1],[35.4,45.3],[36.6,45.4],[36.9,46.6],[38.3,47.1],[39.3,47.2],[38.2,46.2],[37.6,45.3],[38.9,44.4],[41,42.4],[41.6,41.4],[38,40.9],[35,41.6],[31.5,41.2],[29,41.1],[28,42.6]],
+    caspian: [[46.7,44.4],[47.3,45.6],[48.6,46.4],[50.2,46.8],[51.8,46.9],[53,46.6],[53.2,45.3],[52,44.4],[51,43.6],[50.8,42.5],[50,41],[49.5,40],[48.2,40.4],[47.5,42.2],[47.2,43.4]],
+    baltic: [[13,54.2],[17,54.6],[19.4,54.4],[21.2,55.2],[21.1,56.8],[22.4,57.7],[23.6,57.1],[24.4,57.4],[24.3,58.4],[23.5,58.7],[23.4,59.3],[25.5,59.6],[28.1,59.5],[30.2,59.9],[28.8,60.3],[26.6,60.4],[23,59.9],[21.3,60.6],[21.4,62.6],[13,62.6]],
+    ladoga: [[30.3,60.2],[31.6,60.1],[32.9,60.6],[32.8,61.4],[31.4,61.6],[30,61.2],[29.8,60.6]],
+    onega: [[34.8,60.9],[36,61.1],[36.3,62.2],[35.2,62.6],[34.4,61.9]]
+  };
+  for (const k in seas) el('path', { d: smooth(seas[k], true), fill: 'url(#hatch)', stroke: '#6E6A55', 'stroke-width': 2.5 }, water);
+  for (const k in seas) el('path', { d: smooth(seas[k], true), fill: '#C9C4A6', opacity: .45 }, water);
+
+  // реки
+  const rivers = document.getElementById('rivers');
+  const riverData = {
+    'Волга': [[33.2,57.1],[35,57.4],[36.8,57.5],[38.8,57.6],[40.8,57.4],[42.8,56.6],[44.6,56.3],[46.4,56.1],[48.2,55.8],[49.1,55.1],[48.7,54],[48.2,53.1],[46.7,52.2],[46,51.1],[45.1,50.1],[44.6,48.9],[45.6,48.1],[46.9,47.2],[47.9,46.6],[48.4,46.1]],
+    'Днепр': [[33.4,55.6],[31.8,54.8],[30.6,54.1],[30.3,53.1],[30.4,52],[30.6,51],[30.5,50.4],[31.4,49.7],[33,49.1],[34.6,48.5],[35.1,47.8],[34.1,47.1],[33,46.7],[32,46.6]],
+    'Ока': [[36,52.9],[36.4,53.9],[37.3,54.7],[38.8,54.6],[40.2,54.6],[41.4,55],[42.7,55.7],[43.9,56.3]],
+    'Дон': [[38.2,54],[38.8,52.6],[39.4,51.5],[40.1,50.4],[41.2,49.6],[42.7,48.7],[41.8,47.7],[40.2,47.3],[39.3,47.2]],
+    'Днестр': [[23,49.4],[24.7,49.1],[26.5,48.6],[28,48],[29.4,47.1],[30,46.4]],
+    'Западная Двина': [[32.4,56.4],[30.6,55.8],[28.2,55.9],[26.4,56.2],[24.6,56.8],[24.1,57]],
+    'Висла': [[19,49.8],[20,50.1],[21.6,50.6],[21.4,51.8],[20.9,52.4],[19.4,52.8],[18.6,53.6],[18.9,54.3]]
+  };
+  for (const k in riverData) el('path', { d: smooth(riverData[k]), fill: 'none', stroke: '#6F7F86', 'stroke-width': k === 'Волга' || k === 'Днепр' ? 4.5 : 3, 'stroke-linecap': 'round' }, rivers);
+  const labels = document.getElementById('labels');
+  const lbl = (txt, ll, size, cls, rot = 0) => { const [x, y] = P(ll); const t = el('text', { x, y, 'font-size': size, class: cls, transform: `rotate(${rot} ${x} ${y})` }, labels); t.textContent = txt; };
+  lbl('Волга', [44.2, 51.2], 30, 'river-label', -62); lbl('Днепр', [31.1, 52.5], 28, 'river-label', -80); lbl('Ока', [38.4, 54.3], 24, 'river-label', 0); lbl('Дон', [40.3, 51.2], 26, 'river-label', -55);
+  lbl('Русское море', [31.6, 43.6], 34, 'sea-label'); lbl('Хвалынское море', [47.6, 43.2], 30, 'sea-label', -60); lbl('Варяжское море', [18.4, 57.6], 30, 'sea-label', -70);
+  const big = (txt, ll, size, color) => { const [x, y] = P(ll); const t = el('text', { x, y, 'font-size': size, 'font-family': "'Cormorant Garamond', Georgia, serif", 'font-weight': 600, 'letter-spacing': 14, fill: color, opacity: .55 }, labels); t.textContent = txt; };
+  big('РУСЬ', [33.5, 55.4], 64, '#5B4636'); big('ОРДА', [45.2, 49.2], 64, '#A8322A'); big('ПОЛЬША', [17.6, 52.2], 40, '#5B4636'); big('ВЕНГРИЯ', [18.6, 47.4], 40, '#5B4636');
+
+  // земли (мягкие пятна поверх областей)
+  const landsG = document.getElementById('lands');
+  const lands = {
+    kiev: [[28.6,51.4],[31.4,51.6],[32.4,50.4],[31.6,49.2],[29.4,49],[28.2,50]],
+    ne: [[34.6,57.6],[38,58.6],[42.4,57.8],[43.4,56.4],[41,55.2],[37.4,55.1],[35,55.8],[33.2,51.6],[31.2,51.2],[30.8,52.8],[33.6,54.4]],
+    nov: [[28.4,57.8],[30.4,60.4],[34.4,61.6],[37.6,60.4],[36.4,58.6],[32.6,57.4],[30,57.1]],
+    gal: [[22.6,51.6],[25.4,51.8],[26.6,50.4],[26.2,48.6],[24.6,48],[22.8,48.8],[22.4,50.2]]
+  };
+  const landEls = {};
+  for (const k in lands) landEls[k] = el('path', { d: smooth(lands[k], true), class: 'land', filter: 'url(#rough)' }, landsG);
+
+  // ярлык и выход: пути в Сарай
+  const flowsG = document.getElementById('flows');
+  const flowData = {
+    yarlyk: [[40.4,56.1],[43.5,53.8],[46.2,50.5],[47.5,47.1]],
+    vyhod: [[35.9,56.86],[40.6,53.2],[45,49.4],[47.4,47.2]],
+    voisko: [[47.3,47.2],[38,48.6],[29,49.6],[24.6,50.6],[20.4,50.2]]
+  };
+  const flowEls = {};
+  for (const k in flowData) flowEls[k] = el('path', { d: smooth(flowData[k]), class: 'flow' }, flowsG);
+
+  // маршрут Батыя 1237–1241
+  const route = document.getElementById('route');
+  route.setAttribute('d', smooth([[49,55],[44,54.6],[40,54.45],[39.2,55.4],[40.4,56.1],[36.5,57.2],[34.2,57.4],[35.6,55.6],[34.8,53.6],[33.4,52.4],[31.3,51.5],[30.5,50.45],[27.4,50.2],[24.7,49.1],[21.8,50.1],[19.9,50.1],[18.6,48.2]]));
+  const L = route.getTotalLength(); route.style.setProperty('--len', L);
+
+  // подписи на краях карты
+  const edgeG = labels;
+  const edge = (txt, x, y, id) => { const t = el('text', { x, y, class: 'edge', id }, edgeG); t.textContent = txt; return t; };
+  const eKar = edge('→ Каракорум: столица империи до 1260-х', 905, 150, 'eKar');
+  const eKor = edge('→ Корея', 1180, 560, 'eKor');
+  const eGeo = edge('↓ Грузия, Киликия, Румский султанат', 760, 1170, 'eGeo');
+
+  // компас
+  const comp = document.getElementById('compass');
+  el('circle', { r: 70, fill: 'none', stroke: '#7A5E3A', 'stroke-width': 2 }, comp);
+  el('circle', { r: 54, fill: 'none', stroke: '#7A5E3A', 'stroke-width': 1, 'stroke-dasharray': '3 5' }, comp);
+  el('path', { d: 'M0 -84 L12 0 L0 84 L-12 0 Z', fill: '#7A5E3A' }, comp);
+  el('path', { d: 'M-84 0 L0 -12 L84 0 L0 12 Z', fill: '#B89F78' }, comp);
+  el('path', { d: 'M0 -84 L12 0 L0 0 Z', fill: '#A8322A' }, comp);
+  const nn = el('text', { y: -94, 'text-anchor': 'middle', 'font-family': "'Cormorant Garamond', serif", 'font-size': 30, 'font-weight': 700, fill: '#5B4636' }, comp); nn.textContent = 'С';
+
+  // города
+  const cities = {
+    ryazan:   { ll: [40.0, 54.45], name: 'Рязань', yr: '1237', img: 'img/ryazan.jpg', src: 'Разорение Рязани. Лицевой летописный свод, XVI в.', text: '<p>Первый русский город на пути Батыя: взят в декабре 1237 г.</p>' },
+    vladimir: { ll: [40.4, 56.1], name: 'Владимир', yr: '1238', img: 'img/vladimir.jpg', src: 'Взятие Владимира. Лицевой летописный свод, XVI в.', text: '<p>Столица Северо-Восточной Руси, взята в феврале 1238 г. Позже здесь сидел главный ордынский надзиратель, «великий баскак владимирский».</p>' },
+    tver:     { ll: [35.9, 56.86], name: 'Тверь', yr: '', text: '<p>В начале XIV века тверские князья были главными соперниками Москвы в борьбе за ярлык на великое княжение.</p>' },
+    moscow:   { ll: [37.6, 55.75], name: 'Москва', yr: '', text: '<p>В XIII веке пока небольшой город Владимирской земли.</p>' },
+    chernigov:{ ll: [31.3, 51.5], name: 'Чернигов', yr: '1239', text: '<p>Черниговская земля устроена как Северо-Восток: перепись работоспособных мужчин, ордынские «данщики», баскаки.</p>' },
+    kiev:     { ll: [30.5, 50.45], name: 'Киев', yr: '1240', img: 'img/kiev1240.png', src: 'Осада Киева. Лицевой летописный свод, XVI в.', text: '<p>Взят в декабре 1240 г. Затем в Киевской земле переписали всех мужчин, независимо от возраста, а баскаки сидели прямо в Киеве.</p>' },
+    novgorod: { ll: [31.3, 58.5], name: 'Новгород', yr: '', text: '<p>Батый до Новгорода не дошёл. Перепись здесь была частичной, дань собирал великий князь владимирский, баскаков не было.</p>' },
+    galich:   { ll: [24.7, 49.1], name: 'Галич', yr: '1241', text: '<p>Галицко-Волынская земля: ни переписи, ни баскаков, дань собирали местные князья. Зато они чаще других ходили с монголами на Литву, Польшу и Венгрию.</p>' },
+    krakow:   { ll: [19.94, 50.06], name: 'Краков', yr: '1479', text: '<p>Здесь работал польский хронист Ян Длугош. Под 1479 г. он первым назвал зависимость Руси «игом», по-латыни iugum.</p>' },
+    sarai:    { ll: [47.5, 47.0], name: 'Сарай', yr: 'Орда', img: 'img/boris-batu.png', src: 'Князь у хана. Лицевой летописный свод, XVI в.', text: '<p>Постоянная столица Орды на Нижней Волге. А сама «орда» означала ставку хана, кочующую столицу.</p><p>Сюда князья ездили за ярлыком. Хана на Руси звали «царём», как императора.</p>' }
+  };
+  const markersG = document.getElementById('markers');
+  const markerEls = {};
+  for (const k in cities) {
+    const c = cities[k]; const [x, y] = P(c.ll);
+    const g = el('g', { class: 'marker', tabindex: 0, role: 'button', 'aria-label': c.name, transform: `translate(${x} ${y})` }, markersG);
+    el('circle', { class: 'halo', r: 9 }, g);
+    el('circle', { class: 'dot', r: 8 }, g);
+    const t = el('text', { x: 14, y: -10 }, g); t.textContent = c.name;
+    if (c.yr) { const yv = el('text', { x: 16, y: 18, class: 'yr' }, g); yv.textContent = c.yr; }
+    g.addEventListener('click', () => openCard(k));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(k); } });
+    markerEls[k] = g;
+  }
+
+  // карточка города
+  const card = document.getElementById('card');
+  const cardImg = document.getElementById('cardImg');
+  function openCard(k) {
+    const c = cities[k];
+    document.getElementById('cardName').textContent = c.name;
+    document.getElementById('cardYr').textContent = c.yr || '';
+    document.getElementById('cardText').innerHTML = c.text;
+    document.getElementById('cardSrc').textContent = c.src || '';
+    cardImg.hidden = !c.img;
+    if (c.img) { cardImg.src = c.img; cardImg.alt = c.src || c.name; }
+    card.classList.add('open');
+  }
+  document.getElementById('cardClose').addEventListener('click', () => card.classList.remove('open'));
+  cardImg.addEventListener('click', () => openLightbox(cardImg.src, document.getElementById('cardSrc').textContent));
+
+  // лайтбокс
+  const lb = document.getElementById('lightbox');
+  function openLightbox(src, cap) { document.getElementById('lbImg').src = src; document.getElementById('lbImg').alt = cap; document.getElementById('lbCap').textContent = cap; lb.classList.add('open'); }
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+
+  // плавная камера
+  let vb = [0, 0, 1368, 1218];
+  map.setAttribute('viewBox', vb.join(' '));
+  let anim;
+  function camera(target, ms = 1600) {
+    cancelAnimationFrame(anim);
+    const from = vb.slice(); const t0 = performance.now();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const tick = now => {
+      const t = reduce ? 1 : Math.min(1, (now - t0) / ms);
+      vb = from.map((v, i) => v + (target[i] - v) * ease(t));
+      map.setAttribute('viewBox', vb.join(' '));
+      if (t < 1) anim = requestAnimationFrame(tick);
+    };
+    anim = requestAnimationFrame(tick);
+  }
+
+  // шаги выступления
+  const steps = [
+    {
+      t: 'Нашествие', view: [40, 120, 1180, 900], hot: ['ryazan', 'vladimir', 'chernigov', 'kiev', 'galich'], route: true,
+      html: `<h1>Было ли <i>«иго»?</i></h1>
+        <p class="lead">Слово появилось позже, но зависимость Руси от Орды была реальной и в разных землях устроена по-разному.</p>
+        <div class="box"><b>1237–1241</b><p>Два похода Батыя, внука Чингисхана. После них русские земли оказались в зависимости от монгольских ханов.</p></div>
+        <div class="box"><b>Сначала Каракорум, потом Сарай</b><p>Поначалу верховными правителями Руси считались великие ханы в Каракоруме. С 1260-х годов улус Джучи стал самостоятельным, и Русь зависела уже только от него.</p></div>
+        <details><summary>Почему «Орда», а не «Золотая Орда»?</summary><p>Название «Золотая Орда» появляется в источниках только в XVI веке, когда государства уже не было. В XIII–XV веках говорили просто «Орда».</p></details>
+        <details><summary>Что значит слово «орда»?</summary><p>Первоначально это ставка хана, своего рода кочующая столица. Постоянной столицей был город Сарай на Нижней Волге.</p></details>
+        <details><summary>Что такое улус Джучи?</summary><p>Западный улус Монгольской империи. Назван по имени Джучи, отца Батыя: ему первому выделили земли к западу от Монголии.</p></details>
+        <details><summary>Монголы или татары?</summary><p>Сами завоеватели называли себя монголами. «Татары» сначала было именем одного племени, китайцы перенесли его на всех монголов. Двойное «монголо-татары» появилось в науке в XIX веке.</p></details>`
+    },
+    {
+      t: 'Слово «иго»', view: [0, 140, 1100, 860], hot: ['krakow'],
+      html: `<h2>«Иго»: слово <i>не той эпохи</i></h2>
+        <div class="chips" id="termChips">
+          <button class="chip" aria-pressed="true" data-t="Современники писали о «томлении», «насилье», «неволе», «работе» в смысле рабства. Эмоциональных слов много, общего понятия нет.">XIII–XV вв.</button>
+          <button class="chip" aria-pressed="false" data-t="Польский хронист Ян Длугош под 1479 годом пишет, что Иван III сбросил «варварское иго» (лат. iugum). Краков отмечен на карте." data-city="krakow">1479</button>
+          <button class="chip" aria-pressed="false" data-t="В России слово «иго» появляется только в XVII столетии.">XVII в.</button>
+          <button class="chip" aria-pressed="false" data-t="В конце XX века учёные писали «ордынское иго». Двойное «монголо-татарское» вышло из употребления: слишком неуклюжее.">XX в.</button>
+          <button class="chip" aria-pressed="false" data-t="Большинство историков не применяют термин «иго» или пишут его в кавычках. Научно точнее «система зависимости русских земель».">Сегодня</button>
+        </div>
+        <div class="box" id="termBox"><p>Современники писали о «томлении», «насилье», «неволе», «работе» в смысле рабства. Эмоциональных слов много, общего понятия нет.</p></div>
+        <blockquote>«…смешиваются термин и явление, им описываемое»<cite>А. А. Горский об обеих сторонах спора</cite></blockquote>
+        <details><summary>Почему вокруг слова был скандал?</summary><p>Горский вписал в историко-культурный стандарт для единого учебника формулировку «система зависимости русских земель от ордынских ханов». В СМИ и в интернете случился настоящий информационный взрыв.</p></details>
+        <details><summary>Что говорили спорщики?</summary><p>Одни спрашивали, куда исчезло «татаро-монгольское иго», и даже пустили слух, что его убрали по настоянию казанских историков. Другие радовались, что «ига не было»: от идей Гумилёва о благотворном союзе Руси и Орды до утверждений Фоменко, что Русь и Орда одно и то же.</p></details>
+        <details><summary>Какой термин точнее?</summary><p>Если смотреть из Орды: «система власти над русскими землями». Если смотреть с Руси: «система зависимости русских земель».</p></details>
+        <details><summary>Значит, ига не было?</summary><p>Было явление. Если термин не встречается у современников и не годится как научное понятие, это не значит, что не было самой зависимости. Люди той эпохи ощущали её как тяжёлую.</p></details>`
+    },
+    {
+      t: 'Зависимость', view: [300, 120, 1068, 940], hot: ['sarai', 'vladimir', 'tver'], flows: ['yarlyk', 'vyhod'], edges: ['eKar'],
+      html: `<h2>Но зависимость <i>была</i></h2>
+        <div class="chips" id="depChips">
+          <button class="chip" aria-pressed="true" data-f="yarlyk" data-t="Хан утверждает князя на его столе, выдавая грамоту-ярлык на княжение. Князья едут за ярлыком в Орду.">1 · Ярлык</button>
+          <button class="chip" aria-pressed="false" data-f="vyhod" data-t="Дань Орде, она называлась «выход», и ещё ряд других поборов.">2 · Выход</button>
+          <button class="chip" aria-pressed="false" data-f="voisko" data-t="Обязанность оказывать монголам военную помощь. Например, галицко-волынские князья ходили с ними на Литву, Польшу и Венгрию.">3 · Войско</button>
+        </div>
+        <div class="box" id="depBox"><p>Хан утверждает князя на его столе, выдавая грамоту-ярлык на княжение. Князья едут за ярлыком в Орду.</p></div>
+        <details><summary>Почему хана звали «царём»?</summary><p>Это императорский титул, равный титулу императоров Византии и Священной Римской империи.</p></details>
+        <details><summary>Что известно точно, а что нет?</summary><p>Учёные изучали в основном политические отношения Руси и Орды. Ясность есть только с ярлыками. О податях и работе ордынских чиновников источников мало, приходится ограничиваться общими суждениями.</p></details>
+        <details><summary>Как же тогда изучать?</summary><p>Горский предлагает сравнительно-исторический подход: сравнить Русь с другими странами, покорёнными монголами. О походах монголов писали на китайском, корейском, арабском, персидском, армянском, сирийском, грузинском, греческом, русском, венгерском, польском, немецком, итальянском, английском и французском языках.</p></details>
+        <details><summary>Кто не платил дань?</summary><p>Духовенство. Его не переписывали и освобождали от податей во всех покорённых монголами странах, какой бы ни была вера.</p></details>`
+    },
+    {
+      t: 'Сравнение', view: [0, 0, 1368, 1218], hot: ['sarai'], edges: ['eKar', 'eKor', 'eGeo'],
+      html: `<h2>Русь среди <i>покорённых стран</i></h2>
+        <p>Русь не оккупировали напрямую, а правили через местных князей. Так же было ещё с шестью странами.</p>
+        <svg class="inset" viewBox="0 0 420 210" role="img" aria-label="Схема Монгольской империи и стран с опосредованным управлением">
+          <path d="M70 58 C120 30 220 30 300 48 C360 62 400 100 388 140 C376 176 300 176 230 166 C170 158 120 162 84 146 C56 132 46 92 70 58 Z" fill="rgba(168,50,42,.07)" stroke="#A8322A" stroke-dasharray="4 5" stroke-width="1.2"/>
+          <text x="210" y="62" class="iz">Монгольская империя</text>
+          <g class="pt" data-c="rus"><circle cx="76" cy="47" r="5"/><text x="84" y="44">Русь</text></g>
+          <g class="hq"><circle cx="113" cy="84" r="3.5"/><text x="120" y="88">Сарай</text></g>
+          <g class="hq"><path d="M288 76 l3 7 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 z"/><text x="288" y="110" text-anchor="middle">Каракорум</text></g>
+          <g class="pt" data-c="korea"><circle cx="365" cy="134" r="5"/><text x="365" y="124" text-anchor="middle">Корея</text></g>
+          <g class="pt" data-c="bulgaria"><circle cx="43" cy="107" r="5"/><text x="36" y="104" text-anchor="end">Болгария</text></g>
+          <g class="pt" data-c="trebizond"><circle cx="88" cy="116" r="5"/><text x="80" y="103" text-anchor="middle">Трапезунд</text></g>
+          <g class="pt" data-c="georgia"><circle cx="104" cy="113" r="5"/><text x="112" y="120">Грузия</text></g>
+          <g class="pt" data-c="cilicia"><circle cx="76" cy="138" r="5"/><text x="80" y="155" text-anchor="middle">Киликия</text></g>
+          <g class="pt" data-c="rum"><circle cx="62" cy="130" r="5"/><text x="54" y="133" text-anchor="end">Рум</text></g>
+          <text x="6" y="24" class="iz2">← Польша, Венгрия</text>
+          <text x="404" y="176" class="iz2" text-anchor="end">Япония →</text>
+          <text x="36" y="200" class="iz2">↓ Сирия, Египет</text>
+        </svg>
+        <div class="chips" id="cmpChips">
+          <button class="chip" aria-pressed="true" data-c="rus">Русь</button>
+          <button class="chip" aria-pressed="false" data-c="korea">Корея</button>
+          <button class="chip" aria-pressed="false" data-c="georgia">Грузия</button>
+          <button class="chip" aria-pressed="false" data-c="cilicia">Киликия</button>
+          <button class="chip" aria-pressed="false" data-c="rum">Рум</button>
+          <button class="chip" aria-pressed="false" data-c="trebizond">Трапезунд</button>
+          <button class="chip" aria-pressed="false" data-c="bulgaria">Болгария</button>
+        </div>
+        <div class="box" id="cmpBox"></div>
+        <blockquote>«…намереваются завоевать их»<cite>Плано Карпини, посол римского папы к великому хану, 1247 г., о народах, с которых монголы уже берут дань</cite></blockquote>
+        <details><summary>Почему не прямая власть?</summary><p>Такое управление устанавливали на крайних рубежах экспансии, где завоевателям не хватало ресурсов для прямой власти: Корея на востоке, Русь на северо-западе, Закавказье и Малая Азия на юго-западе.</p></details>
+        <details><summary>Что планировали дальше?</summary><p>Эти страны были плацдармом: за Кореей должна была последовать Япония, за Закавказьем и Малой Азией Сирия и Египет, за Русью Польша и Венгрия. Несмотря на походы, планы не осуществились.</p></details>`
+    },
+    {
+      t: 'Четыре режима', view: [140, 100, 900, 780], hot: ['kiev', 'vladimir', 'chernigov', 'novgorod', 'galich'], lands: true,
+      html: `<h2>Одна зависимость, <i>четыре режима</i></h2>
+        <p>До 1260-х годов в разных русских землях порядки были разными. Выберите землю:</p>
+        <div class="chips" id="landChips">
+          <button class="chip" aria-pressed="true" data-l="kiev">Киевская</button>
+          <button class="chip" aria-pressed="false" data-l="ne">Северо-Восток и Чернигов</button>
+          <button class="chip" aria-pressed="false" data-l="nov">Новгородская</button>
+          <button class="chip" aria-pressed="false" data-l="gal">Галицко-Волынская</button>
+        </div>
+        <dl class="rows" id="landRows"></dl>
+        <div class="thumbs" style="margin-top:12px">
+          <button class="thumb" data-src="img/baskaki.jpg" data-cap="С. Иванов. «Баскаки», 1909"><img src="img/baskaki.jpg" alt="С. Иванов, «Баскаки»"></button>
+          <button class="thumb" data-src="img/kiev1240.png" data-cap="Осада Киева, 1240. Лицевой летописный свод"><img src="img/kiev1240.png" alt="Осада Киева"></button>
+          <button class="thumb" data-src="img/vladimir.jpg" data-cap="Взятие Владимира, 1238. Лицевой летописный свод"><img src="img/vladimir.jpg" alt="Взятие Владимира"></button>
+        </div>
+        <details><summary>Кто такие баскаки и данщики?</summary><p>Данщики собирали дань и жили в соседних степных улусах. Баскаки, особые чиновники, сидели в русских городах и следили за сбором дани и за верностью местной знати.</p></details>
+        <details><summary>Что изменилось к концу XIII века?</summary><p>В Северо-Восточной Руси сбор дани ордынцами и баскаки исчезли. Дань стали собирать сами князья, а следили за этим время от времени приезжавшие ханские «послы».</p></details>`
+    },
+    {
+      t: 'Вывод', view: [0, 0, 1368, 1218], hot: [], edges: ['eKar', 'eKor', 'eGeo'],
+      html: `<h2>Реальная, но <i>неоднородная</i></h2>
+        <p>Зависимость была, и современники ощущали её как тяжёлую. Но это не одно «иго», а система с разными порядками в разных землях, похожая на то, как монголы правили Кореей, Грузией и Киликией.</p>
+        <p class="subhead">Традиционная схема XIX и первой половины XX века</p>
+        <p style="font-size:14px">Горский в конце главы излагает, как её до сих пор пересказывают учебники. Нажмите на пункт:</p>
+        <details class="sch"><summary><b>1</b> Восстания и карательные походы</summary><p>Народные восстания в городах: в 1262 году в нескольких городах Северо-Восточной Руси, в 1289 году в Ростове, в 1327 году в Твери. Орда в ответ и просто для устрашения посылает карательные походы.</p></details>
+        <details class="sch"><summary><b>2</b> Тверь борется, Москва служит</summary><p>В начале XIV века за освобождение пытаются бороться тверские князья, прежде всего Михаил Ярославич. Их соперники, московские князья, верно служат Орде.</p></details>
+        <details class="sch"><summary><b>3</b> Куликово поле, 1380</summary><p>Дмитрий Донской побеждает и свергает иго, но через два года хан Тохтамыш разоряет Москву и восстанавливает зависимость.</p></details>
+        <details class="sch"><summary><b>4</b> Угра, 1480</summary><p>Падение ордынского ига после так называемого стояния на Угре.</p></details>
+        <div class="box"><b>«Разберём эту схему пункт за пунктом»</b><p>Так заканчивается глава 9. Каждый пункт проверяют следующие главы.</p></div>
+        <p class="ask">Если слова «иго» не было, значит ли это, что не было и зависимости?</p>`
+    },
+    {
+      t: 'Проверь себя', view: [40, 120, 1180, 900], hot: ['ryazan', 'vladimir', 'kiev', 'sarai', 'krakow'],
+      html: `<h2>Проверь <i>себя</i></h2>
+        <p>Нажмите на вопрос, чтобы открыть ответ.</p>
+        <div class="quiz">
+          <button class="q" aria-expanded="false"><span>Когда появилось название «Золотая Орда»?</span><span class="a">Только в XVI веке, когда государства уже не было.</span></button>
+          <button class="q" aria-expanded="false"><span>Кто первым назвал зависимость «игом»?</span><span class="a">Польский хронист Ян Длугош, под 1479 годом.</span></button>
+          <button class="q" aria-expanded="false"><span>Когда слово «иго» появилось в России?</span><span class="a">Только в XVII веке.</span></button>
+          <button class="q" aria-expanded="false"><span>В чём выражалась зависимость?</span><span class="a">Ярлык на княжение, дань («выход») и военная помощь монголам.</span></button>
+          <button class="q" aria-expanded="false"><span>Какие ещё страны управлялись через местных правителей?</span><span class="a">Корея, Грузинское царство, Киликийская Армения, Румский султанат, Трапезундская империя, Дунайская Болгария.</span></button>
+          <button class="q" aria-expanded="false"><span>Сколько режимов зависимости было на Руси?</span><span class="a">Четыре: Киевская земля, Северо-Восток с Черниговом, Новгород, Галицко-Волынская земля.</span></button>
+          <button class="q" aria-expanded="false"><span>Где не было баскаков?</span><span class="a">В Новгородской и Галицко-Волынской землях.</span></button>
+          <button class="q" aria-expanded="false"><span>Кто не платил дань Орде?</span><span class="a">Духовенство, во всех завоёванных монголами странах.</span></button>
+          <button class="q" aria-expanded="false"><span>Кого монголы собирались завоевать после Руси?</span><span class="a">Польшу и Венгрию.</span></button>
+        </div>
+        <div class="thumbs">
+          <button class="thumb" data-src="img/ryazan.jpg" data-cap="Разорение Рязани, 1237. Лицевой летописный свод"><img src="img/ryazan.jpg" alt="Разорение Рязани"></button>
+          <button class="thumb" data-src="img/batu-dmitr.png" data-cap="Батый и киевский воевода Дмитр. Лицевой летописный свод"><img src="img/batu-dmitr.png" alt="Батый и Дмитр"></button>
+          <button class="thumb" data-src="img/suzdal.jpg" data-cap="Взятие Суздаля. Лицевой летописный свод"><img src="img/suzdal.jpg" alt="Взятие Суздаля"></button>
+        </div>`
+    }
+  ];
+
+  const scroll = document.getElementById('scroll');
+  const rail = document.getElementById('rail');
+  const stepBtns = steps.map((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step'; b.type = 'button';
+    b.innerHTML = `<span class="n">${i + 1}</span><span class="t">${s.t}</span>`;
+    b.title = s.t;
+    b.addEventListener('click', () => go(i));
+    rail.appendChild(b);
+    return b;
+  });
+
+  const landData = {
+    kiev: { census: 'всё мужское население, независимо от возраста', tribute: 'ордынские «данщики» из ближайшего степного улуса', baskak: '<span class="badge yes">есть</span>сидели в Киеве', city: 'kiev' },
+    ne: { census: 'мужчины работоспособного возраста', tribute: '«данщики», с конца XIII в. сами князья', baskak: '<span class="badge yes">есть</span>«великий баскак владимирский»', city: 'vladimir' },
+    nov: { census: 'частичная', tribute: 'великий князь владимирский, по-видимому не ежегодно', baskak: '<span class="badge no">нет</span>', city: 'novgorod' },
+    gal: { census: 'не проводилась', tribute: 'местные князья', baskak: '<span class="badge no">нет</span>зато князья чаще других ходили с монголами в походы на Литву, Польшу и Венгрию', city: 'galich' }
+  };
+  function showLand(k) {
+    document.getElementById('landRows').innerHTML = `<div><dt>Перепись</dt><dd>${landData[k].census}</dd></div><div><dt>Дань</dt><dd>${landData[k].tribute}</dd></div><div><dt>Баскаки</dt><dd>${landData[k].baskak}</dd></div>`;
+    for (const key in landEls) landEls[key].classList.toggle('sel', key === k);
+    for (const key in markerEls) markerEls[key].classList.toggle('hot', key === landData[k].city);
+  }
+
+  let current = -1;
+  function go(i) {
+    i = Math.max(0, Math.min(steps.length - 1, i));
+    if (i === current) return;
+    current = i;
+    const s = steps[i];
+    stepBtns.forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
+    scroll.classList.add('swap');
+    setTimeout(() => {
+      scroll.innerHTML = s.html; scroll.scrollTop = 0; scroll.classList.remove('swap');
+      wire();
+      if (s.lands) showLand('kiev');
+    }, 260);
+    camera(s.view);
+    card.classList.remove('open');
+    route.classList.toggle('on', !!s.route || i === steps.length - 1);
+    for (const k in markerEls) {
+      markerEls[k].classList.toggle('hot', s.hot.includes(k));
+      markerEls[k].classList.toggle('dim', s.hot.length > 0 && !s.hot.includes(k) && !['moscow', 'tver'].includes(k) ? false : false);
+    }
+    for (const k in flowEls) { flowEls[k].classList.toggle('on', !!(s.flows && s.flows.includes(k))); flowEls[k].classList.remove('hl'); }
+    if (s.flows) flowEls.yarlyk.classList.add('hl');
+    for (const k in landEls) { landEls[k].classList.toggle('on', !!s.lands); landEls[k].classList.remove('sel'); }
+    const edgesOn = s.edges || [];
+    [eKar, eKor, eGeo].forEach(e => e.classList.toggle('on', edgesOn.includes(e.id)));
+    if (s.route && i === 0) { route.classList.remove('on'); route.getBoundingClientRect(); requestAnimationFrame(() => route.classList.add('on')); }
+  }
+
+  function wire() {
+    const term = document.getElementById('termChips');
+    if (term) term.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+      term.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false'));
+      document.getElementById('termBox').innerHTML = `<p>${c.dataset.t}</p>`;
+      if (c.dataset.city) openCard(c.dataset.city);
+    }));
+    const dep = document.getElementById('depChips');
+    if (dep) dep.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+      dep.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false'));
+      document.getElementById('depBox').innerHTML = `<p>${c.dataset.t}</p>`;
+      for (const k in flowEls) { flowEls[k].classList.toggle('on', k === c.dataset.f || (k !== 'voisko' && c.dataset.f !== 'voisko')); flowEls[k].classList.toggle('hl', k === c.dataset.f); }
+      camera(c.dataset.f === 'voisko' ? [0, 160, 1368, 1000] : [300, 160, 1068, 900], 1200);
+    }));
+    const land = document.getElementById('landChips');
+    if (land) land.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+      land.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false'));
+      showLand(c.dataset.l);
+    }));
+
+    const cmp = document.getElementById('cmpChips');
+    if (cmp) {
+      const cmpData = {
+        rus: '<b>Русь</b><p>Северо-западный предел завоеваний. Плацдарм для походов на Польшу и Венгрию. Внутри четыре разных режима, о них дальше.</p>',
+        korea: '<b>Корея</b><p>Восточный предел завоеваний. Местные правители сохранены, следующей целью монголы видели Японию.</p>',
+        georgia: '<b>Грузинское царство</b><p>Вместе с Великой Арменией. Провели перепись населения и ввели податную систему с множеством повинностей.</p>',
+        cilicia: '<b>Киликийская Армения</b><p>Признала власть монголов добровольно и избежала разорения. Одна ежегодная дань и участие в походах, монгольской администрации не было.</p>',
+        rum: '<b>Румский султанат</b><p>Сильнейшее турецкое государство Малой Азии. Часть земель перешла под прямую власть монголов, на остальных султаны правили под контролем ханских чиновников и платили большую дань.</p>',
+        trebizond: '<b>Трапезундская империя</b><p>Управлялась через своих правителей на юго-западном рубеже монгольской экспансии.</p>',
+        bulgaria: '<b>Дунайская Болгария</b><p>Тоже сохранила своих правителей и вошла в число стран с «опосредованным» управлением.</p>'
+      };
+      const pts = scroll.querySelectorAll('.inset .pt');
+      const pick = key => {
+        cmp.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.c === key ? 'true' : 'false'));
+        pts.forEach(p => p.classList.toggle('sel', p.dataset.c === key));
+        document.getElementById('cmpBox').innerHTML = cmpData[key];
+      };
+      cmp.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => pick(c.dataset.c)));
+      pts.forEach(p => p.addEventListener('click', () => pick(p.dataset.c)));
+      pick('rus');
+    }
+    scroll.querySelectorAll('.q').forEach(q => q.addEventListener('click', () => q.setAttribute('aria-expanded', q.getAttribute('aria-expanded') === 'true' ? 'false' : 'true')));
+    scroll.querySelectorAll('.thumb').forEach(t => t.addEventListener('click', () => openLightbox(t.dataset.src, t.dataset.cap)));
+  }
+
+  document.addEventListener('keydown', e => {
+    if (lb.classList.contains('open') && (e.key === 'Escape' || e.key === ' ')) { e.preventDefault(); lb.classList.remove('open'); return; }
+    if (e.key === 'Escape') { card.classList.remove('open'); return; }
+    if (['ArrowRight', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.target.closest('button'))) { e.preventDefault(); go(current + 1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(current - 1); }
+  });
+  document.getElementById('fs').addEventListener('click', () => {
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    else document.documentElement.requestFullscreen?.().catch(() => {});
+  });
+
+  go(0);
+})();
+</script>
+
+</body>
+</html>
